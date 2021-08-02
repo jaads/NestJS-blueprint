@@ -1,7 +1,7 @@
 import * as request from 'supertest';
 import { Test } from '@nestjs/testing';
 import { AppModule } from './../src/app.module';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { CreationDto } from 'src/CreationDto';
 
 describe('AppController (e2e)', () => {
@@ -13,6 +13,8 @@ describe('AppController (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.useGlobalPipes(new ValidationPipe());
+
     await app.init();
   });
 
@@ -23,15 +25,24 @@ describe('AppController (e2e)', () => {
       .expect('Hello World!');
   });
 
-  it('/ (POST)', () => {
-    const testObj: CreationDto = {
-      name: 'some name',
-      a_number: 3,
-    };
-    return request(app.getHttpServer())
-      .post('/')
-      .send(testObj)
-      .expect(201)
-      .expect(testObj);
+  describe('/ (POST)', () => {
+    it('should create object', () => {
+      const testObj: CreationDto = {
+        name: 'some name',
+        a_number: 3,
+      };
+      return request(app.getHttpServer())
+        .post('/')
+        .send(testObj)
+        .expect(201)
+        .expect(testObj);
+    });
+    it('should notice invalid body', () => {
+      const testObj: CreationDto = {
+        name: 'so',
+        a_number: 1,
+      };
+      return request(app.getHttpServer()).post('/').send(testObj).expect(400);
+    });
   });
 });
